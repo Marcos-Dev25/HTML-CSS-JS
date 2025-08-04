@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+  <title>Cadastrar-se</title>
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap');
@@ -16,11 +16,7 @@
     }
 
     body {
-        background: url(https://plus.unsplash.com/premium_photo-1661882403999-46081e67c401?q=80&w=829&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-
+      background: linear-gradient(to right, #7193fa, #a1c4fd);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -28,17 +24,18 @@
     }
 
     .container {
-      width: 320px;
-      background-color: rgba(255, 255, 255, 0.1);
-      border: 2px solid #000;
-      border-radius: 10px;
-      padding: 30px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 380px;
+      background-color: #fff;
+      border-radius: 15px;
+      padding: 40px 30px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      color: #333;
     }
 
     .form-group {
@@ -46,17 +43,20 @@
       margin-bottom: 20px;
     }
 
-    .form-group input {
+    .form-group input,
+    .form-group select {
       width: 100%;
-      padding: 10px 15px;
-      border: 2px solid #000;
-      border-radius: 10px;
-      outline: none;
-      font-size: 14px;
+      padding: 12px 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.3s;
     }
 
-    .form-group input::placeholder {
-      color: #b5b1a7;
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #7193fa;
+      outline: none;
     }
 
     .form-group i {
@@ -64,7 +64,11 @@
       right: 15px;
       top: 50%;
       transform: translateY(-50%);
-      color: #000;
+      color: #000000;
+    }
+
+    .form-group input[type="date"] {
+      color: #555;
     }
 
     .senha {
@@ -74,7 +78,7 @@
 
     .senha a {
       font-size: 14px;
-      color: #000;
+      color: #7193fa;
       text-decoration: none;
     }
 
@@ -84,29 +88,31 @@
 
     button {
       width: 100%;
-      height: 50px;
+      padding: 12px;
       border: none;
-      border-radius: 40px;
-      background-color: #fff;
-      font-size: 15px;
+      border-radius: 8px;
+      background-color: #7193fa;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.3s, border 0.3s;
+      transition: background-color 0.3s;
     }
 
     button:hover {
-      background-color: #7193fa;
-      border: 2px solid #7193fa;
+      background-color: #567ae0;
     }
 
     p {
       text-align: center;
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 14px;
     }
 
     p a {
-      color: #000;
+      color: #7193fa;
       text-decoration: none;
+      font-weight: bold;
     }
 
     p a:hover {
@@ -117,10 +123,10 @@
 <body>
   <main class="container">
     <form action="http://127.0.0.1:5500/2projeto/site.html" method="POST">
-      <h1>Login</h1>
+      <h1>Cadastrar-se</h1>
 
       <div class="form-group">
-        <input type="email" placeholder="Usuário" required>
+        <input type="email" placeholder="Email" required>
         <i class="bx bxs-user"></i>
       </div>
 
@@ -129,13 +135,26 @@
         <i class="bx bxs-lock-alt"></i>
       </div>
 
+      <div class="form-group">
+        <input type="date" required>
+      </div>
+
+      <div class="form-group">
+        <select name="genero" required>
+          <option value="" disabled selected>Gênero</option>
+          <option value="masculino">Masculino</option>
+          <option value="feminino">Feminino</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+
       <div class="senha">
-        <a href="#" style="color:#7193fa;">Esqueci minha senha</a>
+        <a href="#">Esqueci minha senha</a>
       </div>
 
       <button type="submit">Entrar</button>
 
-      <p>Não tem uma conta? <a href="http://127.0.0.1:5500/criar.html" style="color:#7193fa">Criar conta</a></p>
+      <p>Não tem uma conta? <a href="http://127.0.0.1:5500/criar.html">Criar conta</a></p>
     </form>
   </main>
 </body>
