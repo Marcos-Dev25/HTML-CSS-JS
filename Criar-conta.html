@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arimo', sans-serif;
+    }
+
+    body {
+        background: url(https://plus.unsplash.com/premium_photo-1661882403999-46081e67c401?q=80&w=829&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 320px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 2px solid #000;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 15px;
+      border: 2px solid #000;
+      border-radius: 10px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .form-group input::placeholder {
+      color: #b5b1a7;
+    }
+
+    .form-group i {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #000;
+    }
+
+    .senha {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .senha a {
+      font-size: 14px;
+      color: #000;
+      text-decoration: none;
+    }
+
+    .senha a:hover {
+      text-decoration: underline;
+    }
+
+    button {
+      width: 100%;
+      height: 50px;
+      border: none;
+      border-radius: 40px;
+      background-color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s, border 0.3s;
+    }
+
+    button:hover {
+      background-color: #7193fa;
+      border: 2px solid #7193fa;
+    }
+
+    p {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    p a {
+      color: #000;
+      text-decoration: none;
+    }
+
+    p a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <form action="http://127.0.0.1:5500/2projeto/site.html" method="POST">
+      <h1>Login</h1>
+
+      <div class="form-group">
+        <input type="email" placeholder="Usuário" required>
+        <i class="bx bxs-user"></i>
+      </div>
+
+      <div class="form-group">
+        <input type="password" placeholder="Senha" required>
+        <i class="bx bxs-lock-alt"></i>
+      </div>
+
+      <div class="senha">
+        <a href="#" style="color:#7193fa;">Esqueci minha senha</a>
+      </div>
+
+      <button type="submit">Entrar</button>
+
+      <p>Não tem uma conta? <a href="http://127.0.0.1:5500/criar.html" style="color:#7193fa">Criar conta</a></p>
+    </form>
+  </main>
+</body>
+</html>
