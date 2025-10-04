@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relógio Digital</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+      /* Estilo para todo o corpo da página */
+body {
+    /* Centraliza o conteúdo na tela */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Garante que o body ocupe toda a altura da viewport */
+    height: 100vh;
+    margin: 0;
+    /* Cor de fundo escura */
+    background-color: #282c34;
+    /* Fonte sem serifa de fallback */
+    font-family: Arial, sans-serif;
+}
+
+/* Contêiner para o relógio (para um fundo ou efeito de profundidade) */
+.clock-container {
+    padding: 30px;
+    border-radius: 15px;
+    background: #3a404c;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Estilo do display do relógio */
+.relogio {
+    /* Fonte estilizada para parecer digital */
+    font-family: 'Courier New', Courier, monospace; 
+    font-size: 5rem; /* Tamanho da fonte grande */
+    color: #00ff66; /* Cor verde neon para o texto */
+    text-align: center;
+    /* Sombra suave para o texto (efeito neon) */
+    text-shadow: 0 0 10px rgba(0, 255, 102, 0.8), 
+                 0 0 20px rgba(0, 255, 102, 0.5);
+    padding: 10px;
+}
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="relogio" id="relogio">00:00:00</div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+      function atualizarRelogio() {
+    // 1. Cria um novo objeto Date para obter o horário atual
+    const agora = new Date();
+
+    // 2. Obtém horas, minutos e segundos
+    // O método .padStart(2, '0') garante que o número tenha sempre 2 dígitos, 
+    // adicionando um '0' na frente se for menor que 10 (ex: 9 vira 09)
+    const horas = String(agora.getHours()).padStart(2, '0');
+    const minutos = String(agora.getMinutes()).padStart(2, '0');
+    const segundos = String(agora.getSeconds()).padStart(2, '0');
+
+    // 3. Formata o horário em uma string
+    const horarioFormatado = `${horas}:${minutos}:${segundos}`;
+
+    // 4. Encontra o elemento HTML pelo ID e atualiza seu conteúdo
+    document.getElementById('relogio').textContent = horarioFormatado;
+}
+
+// 5. Usa setInterval para chamar a função "atualizarRelogio" a cada 1000 milissegundos (1 segundo)
+setInterval(atualizarRelogio, 1000);
+
+// 6. Chama a função uma vez imediatamente para exibir a hora correta ao carregar
+atualizarRelogio();
+    </script>
+</body>
+</html>
