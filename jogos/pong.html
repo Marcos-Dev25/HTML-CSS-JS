@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong JS</title>
+ <style>body {
+    background-color: #222;
+    color: #fff;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+#gameCanvas {
+    background-color: #000;
+    border: 3px solid #fff;
+    display: block;
+}
+
+.score-container {
+    font-size: 30px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+#game-message {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #0f0;
+}
+
+.hidden {
+    display: none !important;
+}</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pong Clássico</h1>
+        <div class="score-container">
+            Placar: <span id="score-player">0</span> - <span id="score-cpu">0</span>
+        </div>
+        
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+        
+        <div id="game-message">
+            Use W/S para o Jogador 1. Clique ou pressione ENTER para começar.
+        </div>
+    </div>
+    
+    <script>// ===============================================
+// CONFIGURAÇÃO DO CANVAS E VARIÁVEIS GLOBAIS
+// ===============================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+const PADDLE_HEIGHT = 80;
+const PADDLE_WIDTH = 10;
+const BALL_RADIUS = 5;
+
+let scorePlayer = 0;
+let scoreCPU = 0;
+let gameActive = false;
+let keys = {}; // Para controle das teclas W/S
+
+// Elementos de exibição
+const scorePlayerElement = document.getElementById('score-player');
+const scoreCPUElement = document.getElementById('score-cpu');
+const messageElement = document.getElementById('game-message');
+
+// ===============================================
+// CLASSE BASE PARA OBJETOS (Raquete e Bola)
+// ===============================================
+class GameObject {
+    constructor(x, y, width, height, color = 'white') {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.color = color;
+    }
+
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
+// ===============================================
+// OBJETOS DO JOGO
+// ===============================================
+
+// Raquete do Jogador 1 (Esquerda)
+const playerPaddle = new GameObject(
+    10, 
+    HEIGHT / 2 - PADDLE_HEIGHT / 2, 
+    PADDLE_WIDTH, 
+    PADDLE_HEIGHT
+);
+playerPaddle.speed = 5;
+
+// Raquete da CPU (Direita)
+const cpuPaddle = new GameObject(
+    WIDTH - PADDLE_WIDTH - 10, 
+    HEIGHT / 2 - PADDLE_HEIGHT / 2, 
+    PADDLE_WIDTH, 
+    PADDLE_HEIGHT
+);
+cpuPaddle.speed = 4; // Um pouco mais lenta que o jogador
+
+// Bola
+const ball = {
+    x: WIDTH / 2,
+    y: HEIGHT / 2,
+    radius: BALL_RADIUS,
+    dx: 5, // Velocidade X inicial
+    dy: 5, // Velocidade Y inicial
+    color: 'white',
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    },
+
+    reset() {
+        this.x = WIDTH / 2;
+        this.y = HEIGHT / 2;
+        // Inverte a direção horizontal e dá uma direção Y aleatória
+        this.dx = -this.dx; 
+        this.dy = 5 * (Math.random() > 0.5 ? 1 : -1);
+    }
+};
+
+// ===============================================
+// FUNÇÕES DE LÓGICA
+// ===============================================
+
+/**
+ * Lida com o movimento do jogador (W e S).
+ */
+function updatePlayer() {
+    if (keys['w'] || keys['W']) {
+        playerPaddle.y -= playerPaddle.speed;
+    }
+    if (keys['s'] || keys['S']) {
+        playerPaddle.y += playerPaddle.speed;
+    }
+
+    // Limita o movimento da raquete dentro da tela
+    if (playerPaddle.y < 0) {
+        playerPaddle.y = 0;
+    }
+    if (playerPaddle.y + PADDLE_HEIGHT > HEIGHT) {
+        playerPaddle.y = HEIGHT - PADDLE_HEIGHT;
+    }
+}
+
+/**
+ * Lógica simples de IA para o adversário (CPU).
+ */
+function updateCPU() {
+    // A CPU tenta seguir a posição Y da bola
+    const targetY = ball.y - PADDLE_HEIGHT / 2;
+
+    if (cpuPaddle.y < targetY) {
+        cpuPaddle.y += cpuPaddle.speed;
+    } else if (cpuPaddle.y > targetY) {
+        cpuPaddle.y -= cpuPaddle.speed;
+    }
+
+    // Limita o movimento da CPU
+    if (cpuPaddle.y < 0) {
+        cpuPaddle.y = 0;
+    }
+    if (cpuPaddle.y + PADDLE_HEIGHT > HEIGHT) {
+        cpuPaddle.y = HEIGHT - PADDLE_HEIGHT;
+    }
+}
+
+/**
+ * Lida com o movimento da bola e a pontuação.
+ */
+function updateBall() {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    // Colisão com Paredes Superior e Inferior
+    if (ball.y - BALL_RADIUS < 0 || ball.y + BALL_RADIUS > HEIGHT) {
+        ball.dy = -ball.dy; // Inverte a direção Y
+    }
+
+    // Colisão com Raquetes
+    
+    // 1. Jogador (Esquerda)
+    if (ball.x - BALL_RADIUS < playerPaddle.x + PADDLE_WIDTH &&
+        ball.y > playerPaddle.y && ball.y < playerPaddle.y + PADDLE_HEIGHT) {
+        
+        ball.dx = -ball.dx; // Inverte a direção X
+        
+        // Ajusta o ângulo baseado no ponto de impacto na raquete
+        const relativeIntersectY = (playerPaddle.y + (PADDLE_HEIGHT / 2)) - ball.y;
+        const normalizedRelativeIntersectionY = relativeIntersectY / (PADDLE_HEIGHT / 2);
+        ball.dy = normalizedRelativeIntersectionY * -5; // Ajusta o ângulo vertical
+    }
+
+    // 2. CPU (Direita)
+    if (ball.x + BALL_RADIUS > cpuPaddle.x &&
+        ball.y > cpuPaddle.y && ball.y < cpuPaddle.y + PADDLE_HEIGHT) {
+        
+        ball.dx = -ball.dx; // Inverte a direção X
+        
+        // Ajusta o ângulo
+        const relativeIntersectY = (cpuPaddle.y + (PADDLE_HEIGHT / 2)) - ball.y;
+        const normalizedRelativeIntersectionY = relativeIntersectY / (PADDLE_HEIGHT / 2);
+        ball.dy = normalizedRelativeIntersectionY * -5;
+    }
+
+    // Pontuação (Bola sai da tela)
+    
+    // Ponto para CPU (Saiu pela esquerda)
+    if (ball.x < 0) {
+        scoreCPU++;
+        scoreCPUElement.textContent = scoreCPU;
+        ball.reset();
+    }
+    
+    // Ponto para Jogador (Saiu pela direita)
+    if (ball.x > WIDTH) {
+        scorePlayer++;
+        scorePlayerElement.textContent = scorePlayer;
+        ball.reset();
+    }
+}
+
+/**
+ * Desenha todos os elementos na tela.
+ */
+function draw() {
+    // 1. Limpa a tela (preto)
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    
+    // 2. Desenha a linha central (opcional)
+    ctx.strokeStyle = '#fff';
+    ctx.setLineDash([5, 5]); // Linha pontilhada
+    ctx.beginPath();
+    ctx.moveTo(WIDTH / 2, 0);
+    ctx.lineTo(WIDTH / 2, HEIGHT);
+    ctx.stroke();
+    
+    // 3. Desenha os objetos
+    playerPaddle.draw();
+    cpuPaddle.draw();
+    ball.draw();
+}
+
+/**
+ * Loop principal do jogo.
+ */
+function gameLoop() {
+    if (!gameActive) {
+        // Se o jogo não estiver ativo, apenas desenha a tela
+        draw();
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    // Atualiza a lógica do jogo
+    updatePlayer();
+    updateCPU();
+    updateBall();
+
+    // Desenha a tela
+    draw();
+
+    // Chama o próximo frame
+    requestAnimationFrame(gameLoop);
+}
+
+// ===============================================
+// EVENT LISTENERS E INICIALIZAÇÃO
+// ===============================================
+
+// Gerencia teclas pressionadas (para movimento contínuo)
+document.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+});
+document.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+
+// Iniciar/Reiniciar o jogo
+function startGame() {
+    scorePlayer = 0;
+    scoreCPU = 0;
+    scorePlayerElement.textContent = scorePlayer;
+    scoreCPUElement.textContent = scoreCPU;
+    
+    playerPaddle.y = HEIGHT / 2 - PADDLE_HEIGHT / 2;
+    cpuPaddle.y = HEIGHT / 2 - PADDLE_HEIGHT / 2;
+    ball.reset(); 
+    
+    gameActive = true;
+    messageElement.classList.add('hidden');
+}
+
+canvas.addEventListener('click', startGame);
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') && !gameActive) {
+        startGame();
+    }
+});
+
+
+// Inicia o loop de desenho (para exibir a tela inicial)
+gameLoop();</script>
+</body>
+</html>

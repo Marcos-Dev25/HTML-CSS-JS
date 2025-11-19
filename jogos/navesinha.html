@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Jogo da Navinha - Space Shooter</title>
+    <style>body {
+    /* Centraliza o conteúdo na tela */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #111122; /* Fundo azul escuro (espaço) */
+    font-family: 'Arial', sans-serif;
+}
+
+#jogo {
+    /* Estiliza a área de jogo */
+    border: 4px solid #00c3ff; /* Borda azul clara */
+    background-color: black; /* Fundo preto para o canvas */
+    box-shadow: 0 0 20px rgba(0, 195, 255, 0.5);
+    /* O tamanho é definido no JavaScript, mas pode ser sobreescrito aqui */
+}</style>
+</head>
+<body>
+
+    <canvas id="jogo"></canvas>
+
+    <script>// Obtém o canvas e seu contexto 2D
+const canvas = document.getElementById('jogo');
+const ctx = canvas.getContext('2d');
+
+// Configurações do Canvas
+canvas.width = 800;
+canvas.height = 600;
+
+// --- Variáveis Globais do Jogo ---
+let pontuacao = 0;
+let gameOver = false;
+
+// Objeto da Nave
+let nave = {
+    x: canvas.width / 2,
+    y: canvas.height - 60,
+    largura: 40,
+    altura: 40,
+    velocidade: 7
+};
+
+// Arrays para elementos em movimento
+let tiros = [];
+let inimigos = [];
+
+// Gerenciamento de Teclas
+let teclasPressionadas = {};
+
+// --- CLASSES (Para organizar objetos) ---
+
+class Tiro {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.largura = 4;
+        this.altura = 15;
+        this.velocidade = 8;
+        this.cor = 'yellow';
+    }
+
+    desenhar() {
+        ctx.fillStyle = this.cor;
+        ctx.fillRect(this.x, this.y, this.largura, this.altura);
+    }
+
+    atualizar() {
+        this.y -= this.velocidade;
+    }
+}
+
+class Inimigo {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.largura = 35;
+        this.altura = 35;
+        this.velocidade = 2;
+        this.cor = 'red';
+    }
+
+    desenhar() {
+        ctx.fillStyle = this.cor;
+        // Desenha um triângulo (simulando uma nave inimiga)
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.largura / 2, this.y);
+        ctx.lineTo(this.x + this.largura, this.y + this.altura);
+        ctx.lineTo(this.x, this.y + this.altura);
+        ctx.fill();
+    }
+
+    atualizar() {
+        this.y += this.velocidade;
+    }
+}
+
+// --- FUNÇÕES DE LÓGICA ---
+
+// Função de Detecção de Colisão (AABB)
+function colisao(obj1, obj2) {
+    return obj1.x < obj2.x + obj2.largura &&
+           obj1.x + obj1.largura > obj2.x &&
+           obj1.y < obj2.y + obj2.altura &&
+           obj1.y + obj1.altura > obj2.y;
+}
+
+// Spawna novos inimigos em intervalos
+let spawnInterval = 1000; // Milissegundos
+let ultimoSpawn = Date.now();
+
+function spawnInimigos() {
+    if (Date.now() > ultimoSpawn + spawnInterval) {
+        // Posição X aleatória
+        const xAleatorio = Math.random() * (canvas.width - 40);
+        inimigos.push(new Inimigo(xAleatorio, -30)); // Inicia acima do canvas
+        ultimoSpawn = Date.now();
+    }
+}
+
+// Função para atirar
+function atirar() {
+    // Adiciona um novo tiro na posição central da nave
+    const novoTiro = new Tiro(nave.x + nave.largura / 2 - 2, nave.y);
+    tiros.push(novoTiro);
+}
+
+// --- FUNÇÕES DE DESENHO ---
+
+function desenharNave() {
+    ctx.fillStyle = 'lime';
+    // Desenha um retângulo simples para a nave
+    ctx.fillRect(nave.x, nave.y, nave.largura, nave.altura);
+}
+
+function desenharTiros() {
+    tiros.forEach(tiro => tiro.desenhar());
+}
+
+function desenharInimigos() {
+    inimigos.forEach(inimigo => inimigo.desenhar());
+}
+
+function desenharPontuacao() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Pontuação: ${pontuacao}`, 10, 30);
+}
+
+function desenharGameOver() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'red';
+    ctx.font = '60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2 - 30);
+
+    ctx.fillStyle = 'yellow';
+    ctx.font = '30px Arial';
+    ctx.fillText(`Sua Pontuação Final: ${pontuacao}`, canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Pressione R para Reiniciar', canvas.width / 2, canvas.height / 2 + 70);
+}
+
+// --- FUNÇÕES DE ATUALIZAÇÃO (LÓGICA) ---
+
+function atualizarNave() {
+    // Movimentação (Setas ou A/D)
+    if (teclasPressionadas['ArrowLeft'] || teclasPressionadas['a']) {
+        nave.x -= nave.velocidade;
+    }
+    if (teclasPressionadas['ArrowRight'] || teclasPressionadas['d']) {
+        nave.x += nave.velocidade;
+    }
+
+    // Limites da tela
+    if (nave.x < 0) nave.x = 0;
+    if (nave.x > canvas.width - nave.largura) nave.x = canvas.width - nave.largura;
+}
+
+function atualizarElementos() {
+    // 1. Atualizar e filtrar Tiros
+    tiros.forEach(tiro => tiro.atualizar());
+    // Remove tiros que saíram da tela
+    tiros = tiros.filter(tiro => tiro.y > 0);
+
+    // 2. Atualizar Inimigos
+    inimigos.forEach(inimigo => {
+        inimigo.atualizar();
+        // Verifica se o inimigo atingiu o chão
+        if (inimigo.y + inimigo.altura > canvas.height) {
+            gameOver = true; // Fim de jogo se um inimigo passar
+        }
+    });
+
+    // 3. Detecção de Colisão
+    for (let i = tiros.length - 1; i >= 0; i--) {
+        for (let j = inimigos.length - 1; j >= 0; j--) {
+            if (colisao(tiros[i], inimigos[j])) {
+                // Colisão!
+                tiros.splice(i, 1); // Remove o tiro
+                inimigos.splice(j, 1); // Remove o inimigo
+                pontuacao += 10; // Adiciona pontos
+                break; // Sai do loop interno, pois o tiro já foi removido
+            }
+        }
+    }
+
+    // 4. Checa Colisão entre Nave e Inimigos
+    inimigos.forEach(inimigo => {
+        if (colisao(nave, inimigo)) {
+            gameOver = true;
+        }
+    });
+
+    spawnInimigos();
+}
+
+// --- LOOP PRINCIPAL DO JOGO ---
+
+function loopJogo() {
+    if (gameOver) {
+        desenharGameOver();
+        return; // Para o loop principal
+    }
+
+    // 1. Limpa o canvas a cada frame
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Atualiza a lógica (movimentação, colisões)
+    atualizarNave();
+    atualizarElementos();
+
+    // 3. Desenha tudo na tela
+    desenharNave();
+    desenharTiros();
+    desenharInimigos();
+    desenharPontuacao();
+
+    // Chama o próximo frame
+    requestAnimationFrame(loopJogo);
+}
+
+// --- EVENT LISTENERS (Teclado) ---
+
+window.addEventListener('keydown', (e) => {
+    // Converte para minúsculas para aceitar 'A' e 'a'
+    teclasPressionadas[e.key.toLowerCase()] = true;
+
+    // Atirar no espaço
+    if (e.key === ' ' && !gameOver) {
+        atirar();
+        e.preventDefault(); // Impede que a barra de espaço role a página
+    }
+
+    // Reiniciar o jogo
+    if (e.key.toLowerCase() === 'r' && gameOver) {
+        // Resetar variáveis
+        pontuacao = 0;
+        gameOver = false;
+        nave.x = canvas.width / 2;
+        tiros = [];
+        inimigos = [];
+        // Inicia o loop novamente
+        loopJogo();
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    teclasPressionadas[e.key.toLowerCase()] = false;
+});
+
+
+// --- Inicia o Jogo ---
+loopJogo();</script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 JS</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #faf8ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+h1 {
+    color: #776e65;
+}
+
+.score-container {
+    background-color: #bbada0;
+    color: #eee4da;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+#restart-button {
+    padding: 10px 15px;
+    background-color: #8f7a66;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#game-grid {
+    width: 400px;
+    height: 400px;
+    background-color: #bbada0;
+    border-radius: 6px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.tile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    font-weight: bold;
+    border-radius: 3px;
+    color: #776e65;
+    background-color: #cdc1b4;
+    transition: transform 0.1s ease-in-out;
+}
+
+/* Estilos de cor para os blocos */
+.tile-2 { background-color: #eee4da; color: #776e65; }
+.tile-4 { background-color: #ede0c8; color: #776e65; }
+.tile-8 { background-color: #f2b179; color: #f9f6f2; }
+.tile-16 { background-color: #f59563; color: #f9f6f2; }
+.tile-32 { background-color: #f67c5f; color: #f9f6f2; }
+.tile-64 { background-color: #f65e3b; color: #f9f6f2; }
+.tile-128 { background-color: #edcf72; color: #f9f6f2; font-size: 35px; }
+.tile-256 { background-color: #edcc61; color: #f9f6f2; font-size: 35px; }
+.tile-512 { background-color: #edc850; color: #f9f6f2; font-size: 35px; }
+.tile-1024 { background-color: #edc53f; color: #f9f6f2; font-size: 25px; }
+.tile-2048 { background-color: #edc22e; color: #f9f6f2; font-size: 25px; }
+/* ...adicione mais classes se for jogar além do 2048 */
+
+#game-message {
+    margin-top: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #776e65;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 6px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.hidden {
+    display: none !important;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>2048</h1>
+        <div class="header">
+            <div class="score-container">
+                Pontuação: <span id="score">0</span>
+            </div>
+            <button id="restart-button">Reiniciar</button>
+        </div>
+        
+        <div id="game-grid"></div>
+
+        <div id="game-message" class="hidden"></div>
+    </div>
+
+    <script>const GRID_SIZE = 4;
+let board; // Matriz 4x4 para o jogo
+let score = 0;
+let isGameRunning = true;
+
+const gridElement = document.getElementById('game-grid');
+const scoreElement = document.getElementById('score');
+const messageElement = document.getElementById('game-message');
+const restartButton = document.getElementById('restart-button');
+
+// ===============================================
+// FUNÇÕES DE INICIALIZAÇÃO E RENDERIZAÇÃO
+// ===============================================
+
+/**
+ * Inicializa a matriz do jogo e o estado.
+ */
+function setupGame() {
+    board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
+    score = 0;
+    scoreElement.textContent = score;
+    isGameRunning = true;
+    messageElement.classList.add('hidden');
+    
+    // Gera dois blocos iniciais
+    addRandomTile();
+    addRandomTile();
+    drawBoard();
+}
+
+/**
+ * Desenha a matriz atual na tela (DOM).
+ */
+function drawBoard() {
+    gridElement.innerHTML = '';
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            const value = board[r][c];
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+            
+            if (value > 0) {
+                tile.textContent = value;
+                // Adiciona classe para estilização de cor
+                tile.classList.add(`tile-${value}`);
+            }
+            gridElement.appendChild(tile);
+        }
+    }
+}
+
+/**
+ * Encontra todas as posições vazias (valor 0) na matriz.
+ * @returns {Array<[number, number]>} Lista de coordenadas [row, col].
+ */
+function getEmptyTiles() {
+    const emptyTiles = [];
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            if (board[r][c] === 0) {
+                emptyTiles.push([r, c]);
+            }
+        }
+    }
+    return emptyTiles;
+}
+
+/**
+ * Adiciona um novo bloco (2 ou 4) em uma posição vazia aleatória.
+ */
+function addRandomTile() {
+    const emptyTiles = getEmptyTiles();
+    if (emptyTiles.length === 0) return;
+
+    // Escolhe uma posição aleatória
+    const [r, c] = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+    
+    // 90% chance de 2, 10% chance de 4
+    board[r][c] = (Math.random() < 0.9) ? 2 : 4;
+}
+
+// ===============================================
+// FUNÇÕES DE MOVIMENTO E LÓGICA
+// ===============================================
+
+/**
+ * Remove os zeros e alinha os números na linha/coluna.
+ * Ex: [2, 0, 2, 4] -> [2, 2, 4, 0]
+ * @param {Array<number>} line - Uma linha ou coluna da matriz.
+ * @returns {Array<number>} A linha/coluna compactada.
+ */
+function compactLine(line) {
+    const filtered = line.filter(val => val !== 0);
+    // Adiciona zeros ao final
+    while (filtered.length < GRID_SIZE) {
+        filtered.push(0);
+    }
+    return filtered;
+}
+
+/**
+ * Combina os blocos iguais adjacentes após a compactação.
+ * Ex: [2, 2, 4, 0] -> [4, 4, 0, 0] e atualiza a pontuação.
+ * @param {Array<number>} line - Uma linha/coluna compactada.
+ * @returns {Array<number>} A linha/coluna com blocos combinados.
+ */
+function combineLine(line) {
+    for (let i = 0; i < GRID_SIZE - 1; i++) {
+        if (line[i] !== 0 && line[i] === line[i + 1]) {
+            line[i] *= 2;
+            line[i + 1] = 0; // O próximo bloco é zerado
+            score += line[i];
+        }
+    }
+    return line;
+}
+
+/**
+ * Processa uma única linha/coluna: compacta -> combina -> compacta novamente.
+ * @param {Array<number>} line - A linha ou coluna a ser processada.
+ * @returns {Array<number>} A linha/coluna finalizada.
+ */
+function processLine(line) {
+    let newLine = compactLine(line);
+    newLine = combineLine(newLine);
+    newLine = compactLine(newLine); // Compacta de novo (por exemplo, [4, 0, 0, 0])
+    return newLine;
+}
+
+/**
+ * Executa o movimento e a combinação em uma direção.
+ * @param {string} direction - 'left', 'right', 'up', ou 'down'.
+ * @returns {boolean} True se o tabuleiro mudou, false caso contrário.
+ */
+function move(direction) {
+    let boardChanged = false;
+    let newBoard = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
+
+    // Itera sobre as linhas ou colunas, dependendo da direção
+    for (let i = 0; i < GRID_SIZE; i++) {
+        let line = [];
+        let newLine;
+        
+        if (direction === 'left' || direction === 'right') {
+            line = board[i];
+            if (direction === 'right') line.reverse(); // Inverte para processar da direita
+            
+            newLine = processLine(line);
+            
+            if (direction === 'right') newLine.reverse(); // Volta ao normal
+            
+            for (let j = 0; j < GRID_SIZE; j++) {
+                if (board[i][j] !== newLine[j]) boardChanged = true;
+                newBoard[i][j] = newLine[j];
+            }
+
+        } else if (direction === 'up' || direction === 'down') {
+            // Extrai a coluna para um array temporário
+            for (let j = 0; j < GRID_SIZE; j++) {
+                line.push(board[j][i]);
+            }
+            
+            if (direction === 'down') line.reverse(); // Inverte para processar de baixo
+            
+            newLine = processLine(line);
+            
+            if (direction === 'down') newLine.reverse(); // Volta ao normal
+            
+            // Reinsere a coluna na nova matriz
+            for (let j = 0; j < GRID_SIZE; j++) {
+                if (board[j][i] !== newLine[j]) boardChanged = true;
+                newBoard[j][i] = newLine[j];
+            }
+        }
+    }
+
+    if (boardChanged) {
+        board = newBoard;
+        addRandomTile();
+        drawBoard();
+        scoreElement.textContent = score;
+        checkGameStatus();
+    }
+    return boardChanged;
+}
+
+// ===============================================
+// LÓGICA DE FIM DE JOGO
+// ===============================================
+
+/**
+ * Verifica se o jogo acabou (vitória ou derrota).
+ */
+function checkGameStatus() {
+    // 1. Verificar Vitória (Se o 2048 foi alcançado)
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            if (board[r][c] === 2048) {
+                endGame('Vitória! 🎉');
+                return;
+            }
+        }
+    }
+
+    // 2. Verificar Derrota (Tabuleiro cheio e sem movimentos possíveis)
+    if (getEmptyTiles().length === 0) {
+        // Simula movimentos para checar se há alguma combinação possível
+        if (!canMove()) {
+            endGame('Fim de Jogo! 😢');
+        }
+    }
+}
+
+/**
+ * Checa se há qualquer movimento possível (combinação) no tabuleiro.
+ */
+function canMove() {
+    // Checa combinações horizontais
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE - 1; c++) {
+            if (board[r][c] === board[r][c+1]) return true;
+        }
+    }
+
+    // Checa combinações verticais
+    for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < GRID_SIZE - 1; r++) {
+            if (board[r][c] === board[r+1][c]) return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Exibe a mensagem final do jogo.
+ * @param {string} message - A mensagem a ser exibida.
+ */
+function endGame(message) {
+    isGameRunning = false;
+    messageElement.innerHTML = `
+        ${message}<br>
+        Pontuação Final: ${score}
+    `;
+    messageElement.classList.remove('hidden');
+}
+
+// ===============================================
+// LISTENERS DE EVENTOS
+// ===============================================
+
+// Movimento por teclado
+document.addEventListener('keydown', (e) => {
+    if (!isGameRunning) return;
+
+    let moved = false;
+    switch (e.key) {
+        case 'ArrowUp':
+            moved = move('up');
+            break;
+        case 'ArrowDown':
+            moved = move('down');
+            break;
+        case 'ArrowLeft':
+            moved = move('left');
+            break;
+        case 'ArrowRight':
+            moved = move('right');
+            break;
+    }
+    if (moved) e.preventDefault(); // Impede o scroll da página ao mover
+});
+
+// Botão Reiniciar
+restartButton.addEventListener('click', setupGame);
+
+// Inicia o jogo ao carregar a página
+setupGame();</script>
+</body>
+</html>

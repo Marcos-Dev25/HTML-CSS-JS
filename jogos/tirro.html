@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiro ao Alvo JS</title>
+    <style>body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #e0f7fa;
+    margin: 0;
+}
+
+#game-area {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+h1 {
+    color: #00796b;
+}
+
+#info {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+}
+
+#playfield {
+    width: 600px;
+    height: 400px;
+    background-color: #f0f0f0;
+    border: 3px solid #00796b;
+    position: relative;
+    overflow: hidden; /* Garante que os alvos fiquem dentro da área */
+    cursor: crosshair; /* Cursor de mira */
+    margin: 0 auto 20px auto;
+}
+
+/* --- Estilo do Alvo (Target) --- */
+
+.target {
+    width: 40px;
+    height: 40px;
+    background-color: #e53935; /* Vermelho */
+    border-radius: 50%;
+    position: absolute;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s ease-out;
+}
+
+.target:hover {
+    transform: scale(1.1); /* Efeito ao passar o mouse */
+}
+
+#message {
+    font-size: 1.5em;
+    color: #00796b;
+    margin-bottom: 15px;
+}
+
+#start-button {
+    padding: 10px 30px;
+    font-size: 1.2em;
+    background-color: #43a047; /* Verde */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#start-button:hover {
+    background-color: #388e3c;
+}
+
+/* Oculta a área de jogo antes de iniciar */
+#playfield.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}</style>
+</head>
+<body>
+    <div id="game-area">
+        <h1>Acerte os Alvos!</h1>
+        
+        <div id="info">
+            <span id="score">Pontos: 0</span>
+            <span id="timer">Tempo: 30s</span>
+        </div>
+
+        <div id="playfield">
+            </div>
+
+        <div id="message">Clique em INICIAR para começar!</div>
+        
+        <button id="start-button">INICIAR</button>
+    </div>
+    
+    <script>// Elementos do DOM
+const playfield = document.getElementById('playfield');
+const scoreDisplay = document.getElementById('score');
+const timerDisplay = document.getElementById('timer');
+const messageDisplay = document.getElementById('message');
+const startButton = document.getElementById('start-button');
+
+// --- Variáveis de Jogo ---
+let score = 0;
+let timeLeft = 30; // 30 segundos de jogo
+let isGameRunning = false;
+let timerInterval; // Para o contador de tempo
+let spawnInterval; // Para a geração de alvos
+const MAX_TARGETS = 5; // Número máximo de alvos simultâneos
+
+// --- Funções Auxiliares ---
+
+// Gera um número inteiro aleatório dentro de um range
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Atualiza o display de placar
+function updateScore(points) {
+    score += points;
+    scoreDisplay.textContent = `Pontos: ${score}`;
+}
+
+// --- Lógica do Alvo ---
+
+function createTarget() {
+    if (!isGameRunning || playfield.children.length >= MAX_TARGETS) return;
+
+    const target = document.createElement('div');
+    target.classList.add('target');
+
+    // Define posição aleatória dentro do playfield
+    const fieldWidth = playfield.offsetWidth;
+    const fieldHeight = playfield.offsetHeight;
+    const targetSize = 40; 
+    
+    // Garantindo que o alvo não ultrapasse as bordas
+    const x = getRandomInt(0, fieldWidth - targetSize);
+    const y = getRandomInt(0, fieldHeight - targetSize);
+
+    target.style.left = `${x}px`;
+    target.style.top = `${y}px`;
+
+    // Adiciona o evento de clique (acertar o alvo)
+    target.addEventListener('click', (e) => {
+        if (!isGameRunning) return;
+        
+        updateScore(10); // Cada alvo vale 10 pontos
+        target.remove(); // Remove o alvo ao ser clicado
+        e.stopPropagation(); // Impede que o clique afete o playfield
+    });
+
+    playfield.appendChild(target);
+
+    // Configura um tempo de vida para o alvo (desaparece se não for clicado)
+    const lifetime = getRandomInt(1500, 2500); // Vive entre 1.5 e 2.5 segundos
+    setTimeout(() => {
+        if (target.parentNode) {
+            target.remove();
+        }
+    }, lifetime);
+}
+
+// --- Controle de Jogo ---
+
+function startGame() {
+    // Reseta o estado
+    score = 0;
+    timeLeft = 30;
+    isGameRunning = true;
+    updateScore(0);
+    timerDisplay.textContent = `Tempo: ${timeLeft}s`;
+    messageDisplay.textContent = 'Clique nos alvos o mais rápido que puder!';
+    startButton.style.display = 'none'; // Esconde o botão Iniciar
+    
+    // Remove todos os alvos antigos
+    playfield.innerHTML = '';
+
+    // Inicia a geração de alvos (a cada 500-1000ms)
+    spawnInterval = setInterval(() => {
+        createTarget();
+    }, getRandomInt(500, 1000));
+
+    // Inicia o contador de tempo
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `Tempo: ${timeLeft}s`;
+
+        if (timeLeft <= 0) {
+            endGame();
+        }
+    }, 1000);
+}
+
+function endGame() {
+    isGameRunning = false;
+    
+    // Limpa os temporizadores
+    clearInterval(timerInterval);
+    clearInterval(spawnInterval);
+
+    // Remove todos os alvos da tela
+    playfield.innerHTML = ''; 
+
+    messageDisplay.textContent = `FIM DE JOGO! Sua pontuação final é: ${score}`;
+    startButton.textContent = 'JOGAR NOVAMENTE';
+    startButton.style.display = 'block';
+}
+
+// --- Inicialização ---
+
+startButton.addEventListener('click', startGame);
+
+// Garante que o estado inicial do placar esteja correto
+updateScore(0);</script>
+</body>
+</html>

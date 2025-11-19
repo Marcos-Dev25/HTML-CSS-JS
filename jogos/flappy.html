@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird JS</title>
+    <style>body {
+    font-family: 'Arial', sans-serif;
+    background-color: #34495e; /* Azul escuro */
+    color: #ecf0f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+#gameCanvas {
+    background-color: #7ddcff; /* Céu azul claro */
+    border: 5px solid #2c3e50;
+    display: block;
+    cursor: pointer;
+}
+
+#game-info {
+    font-size: 1.5em;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+#game-message {
+    font-size: 1.2em;
+    margin-top: 15px;
+    color: #f1c40f; /* Amarelo */
+}
+
+.hidden {
+    display: none !important;
+}</style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Flappy Bird</h1>
+        
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <div id="game-info">
+            Pontuação: <span id="score">0</span>
+        </div>
+        
+        <div id="game-message">
+            Clique ou pressione ESPAÇO para começar!
+        </div>
+    </div>
+
+    <script>// ===============================================
+// CONFIGURAÇÃO DO CANVAS E VARIÁVEIS GLOBAIS
+// ===============================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+
+let score = 0;
+let gameActive = false;
+let gameLoopInterval;
+
+// Elementos do DOM
+const scoreElement = document.getElementById('score');
+const messageElement = document.getElementById('game-message');
+
+// ===============================================
+// PROPRIEDADES DA AVE (BIRD)
+// ===============================================
+const bird = {
+    x: 50,
+    y: HEIGHT / 2,
+    radius: 15,
+    vy: 0,           // Velocidade vertical
+    gravity: 0.8,    // Aceleração da gravidade
+    lift: -12,       // Força do pulo
+    color: 'yellow',
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    },
+
+    update() {
+        this.vy += this.gravity;
+        this.y += this.vy;
+
+        // Limita a velocidade máxima de queda
+        if (this.vy > 15) {
+            this.vy = 15;
+        }
+
+        // Não deixa a ave cair abaixo do chão
+        if (this.y + this.radius > HEIGHT) {
+            this.y = HEIGHT - this.radius;
+            gameOver();
+        }
+        // Não deixa a ave sair pelo topo
+        if (this.y - this.radius < 0) {
+            this.y = this.radius;
+            this.vy = 0;
+        }
+    },
+
+    flap() {
+        this.vy = this.lift;
+    },
+
+    reset() {
+        this.y = HEIGHT / 2;
+        this.vy = 0;
+    }
+};
+
+// ===============================================
+// PROPRIEDADES DOS CANOS (PIPES)
+// ===============================================
+const pipeDefaults = {
+    width: 60,
+    gap: 150, // Espaço entre os canos superior e inferior
+    speed: 3
+};
+
+let pipes = []; // Array para armazenar todos os canos ativos
+let pipeGenerationTimer = 0; // Contador para controlar a frequência de novos canos
+
+/**
+ * Cria um novo par de canos (superior e inferior).
+ */
+function createPipe() {
+    // A altura aleatória do cano superior
+    const minHeight = 50;
+    const maxHeight = HEIGHT - pipeDefaults.gap - 50;
+    const topHeight = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
+    
+    // O cano superior
+    pipes.push({
+        x: WIDTH,
+        y: 0,
+        height: topHeight,
+        passed: false // Se a ave já passou por ele (para pontuação)
+    });
+
+    // O cano inferior
+    pipes.push({
+        x: WIDTH,
+        y: topHeight + pipeDefaults.gap,
+        height: HEIGHT - (topHeight + pipeDefaults.gap),
+        passed: false
+    });
+}
+
+/**
+ * Atualiza a posição dos canos e remove os que saíram da tela.
+ */
+function updatePipes() {
+    pipeGenerationTimer++;
+
+    // Gera um novo par de canos a cada 100 frames
+    if (pipeGenerationTimer > 100) {
+        createPipe();
+        pipeGenerationTimer = 0;
+    }
+
+    // Move os canos e checa a pontuação
+    for (let i = 0; i < pipes.length; i++) {
+        const p = pipes[i];
+        p.x -= pipeDefaults.speed;
+
+        // Verifica a pontuação (somente para o cano superior ou o par)
+        if (!p.passed && p.x < bird.x - pipeDefaults.width) {
+            score++;
+            scoreElement.textContent = Math.floor(score / 2); // Divide por 2 pois cada par é 2 objetos
+            p.passed = true;
+        }
+    }
+
+    // Remove os canos que saíram da tela (otimização)
+    pipes = pipes.filter(p => p.x + pipeDefaults.width > 0);
+}
+
+/**
+ * Desenha todos os canos.
+ */
+function drawPipes() {
+    ctx.fillStyle = '#27ae60'; // Verde dos canos
+    pipes.forEach(p => {
+        ctx.fillRect(p.x, p.y, pipeDefaults.width, p.height);
+    });
+}
+
+// ===============================================
+// LÓGICA DE COLISÃO E ESTADO DO JOGO
+// ===============================================
+
+/**
+ * Verifica se a ave colidiu com algum cano.
+ */
+function checkCollision() {
+    for (let i = 0; i < pipes.length; i++) {
+        const p = pipes[i];
+
+        // Colisão horizontal: A ave está dentro da largura do cano?
+        if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + pipeDefaults.width) {
+            
+            // Colisão vertical: A ave está tocando o topo do cano superior OU o fundo do cano inferior?
+            const isCollidingVertically = (bird.y - bird.radius < p.y + p.height && p.y === 0) || 
+                                          (bird.y + bird.radius > p.y && p.y > 0);
+            
+            if (isCollidingVertically) {
+                gameOver();
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Função de Game Over.
+ */
+function gameOver() {
+    gameActive = false;
+    clearInterval(gameLoopInterval);
+    messageElement.textContent = `FIM DE JOGO! Score: ${Math.floor(score / 2)}. Clique ou ESPAÇO para recomeçar.`;
+    messageElement.classList.remove('hidden');
+}
+
+/**
+ * Reinicia todas as variáveis e começa o jogo.
+ */
+function startGame() {
+    if (gameActive) return;
+    
+    score = 0;
+    pipes = [];
+    bird.reset();
+    
+    scoreElement.textContent = 0;
+    messageElement.classList.add('hidden');
+    
+    gameActive = true;
+    
+    // Configura o loop do jogo (aproximadamente 60 FPS)
+    if (gameLoopInterval) clearInterval(gameLoopInterval);
+    gameLoopInterval = setInterval(gameLoop, 1000 / 60); 
+}
+
+// ===============================================
+// LOOP PRINCIPAL DO JOGO
+// ===============================================
+
+function gameLoop() {
+    if (!gameActive) return;
+
+    // 1. Limpa a tela
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    // 2. Atualiza e Desenha a Ave
+    bird.update();
+    bird.draw();
+
+    // 3. Atualiza e Desenha os Canos
+    updatePipes();
+    drawPipes();
+
+    // 4. Checa Colisão
+    checkCollision();
+}
+
+// ===============================================
+// LISTENERS DE EVENTOS
+// ===============================================
+
+// Pulo com a tecla ESPAÇO
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        if (!gameActive) {
+            startGame();
+        } else {
+            bird.flap();
+        }
+        e.preventDefault();
+    }
+});
+
+// Pulo com o clique do mouse no canvas
+canvas.addEventListener('click', () => {
+    if (!gameActive) {
+        startGame();
+    } else {
+        bird.flap();
+    }
+});
+
+// Exibe a tela inicial
+messageElement.classList.remove('hidden');</script>
+</body>
+</html>

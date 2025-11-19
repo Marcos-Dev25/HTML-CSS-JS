@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quebra-Cabeça Deslizante JS</title>
+    <style>body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f8ff;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+#status {
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    color: #555;
+    font-weight: bold;
+}
+
+#puzzle-board {
+    display: grid;
+    /* Define uma grade 3x3 com células de 100px */
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    width: 315px; /* 3*100px + 2*5px de gap */
+    height: 315px;
+    border: 3px solid #3498db;
+    margin: 0 auto 20px auto;
+}
+
+/* --- Estilo da Peça --- */
+.tile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    background-color: #3498db; /* Azul */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    user-select: none; /* Impede seleção de texto */
+}
+
+.tile:hover {
+    background-color: #2980b9;
+}
+
+/* Estilo para a Peça Vazia */
+.empty-tile {
+    background-color: #ecf0f1; /* Cinza claro */
+    cursor: default;
+}
+
+.empty-tile:hover {
+    background-color: #ecf0f1;
+}
+
+#message {
+    font-size: 1.1em;
+    color: #e74c3c;
+    margin-bottom: 15px;
+    min-height: 25px; /* Reserva espaço */
+}
+
+#reset-button {
+    padding: 10px 20px;
+    font-size: 1em;
+    background-color: #f39c12; /* Laranja */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#reset-button:hover {
+    background-color: #e67e22;
+}</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quebra-Cabeça Deslizante (3x3)</h1>
+        
+        <div id="status">
+            <span id="moves">Movimentos: 0</span>
+        </div>
+
+        <div id="puzzle-board">
+            </div>
+
+        <div id="message">Clique em uma peça para começar a jogar.</div>
+        
+        <button id="reset-button">Novo Jogo</button>
+    </div>
+    
+    <script>// Elementos do DOM
+const puzzleBoard = document.getElementById('puzzle-board');
+const movesDisplay = document.getElementById('moves');
+const messageDisplay = document.getElementById('message');
+const resetButton = document.getElementById('reset-button');
+
+// --- Variáveis de Jogo ---
+const DIMENSION = 3; // O jogo será 3x3
+const BOARD_SIZE = DIMENSION * DIMENSION; // Total de peças (9)
+const WINNING_STATE = [1, 2, 3, 4, 5, 6, 7, 8, 0]; // Estado final
+let board = []; // Array que armazena o estado atual do tabuleiro
+let moves = 0;
+let isSolved = false;
+
+// --- Funções de Ajuda ---
+
+// 1. Encontra a posição (linha e coluna) de um valor no array 'board'
+function findPosition(value) {
+    const index = board.indexOf(value);
+    const row = Math.floor(index / DIMENSION);
+    const col = index % DIMENSION;
+    return { index, row, col };
+}
+
+// 2. Verifica se a peça clicada pode se mover para o espaço vazio (0)
+function isMoveValid(clickedIndex) {
+    const { row: clickedRow, col: clickedCol } = findPosition(board[clickedIndex]);
+    const { row: emptyRow, col: emptyCol } = findPosition(0);
+
+    // Movimento é válido se a peça estiver na mesma linha OU na mesma coluna 
+    // E a distância entre elas for exatamente 1
+    const rowDiff = Math.abs(clickedRow - emptyRow);
+    const colDiff = Math.abs(clickedCol - emptyCol);
+
+    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+}
+
+// 3. Atualiza o display de movimentos
+function updateMoves() {
+    movesDisplay.textContent = `Movimentos: ${moves}`;
+}
+
+// --- Lógica Principal do Jogo ---
+
+// Troca duas peças no array 'board'
+function swapTiles(index1, index2) {
+    [board[index1], board[index2]] = [board[index2], board[index1]];
+}
+
+// Lida com o clique na peça
+function handleTileClick(e) {
+    if (isSolved) return;
+
+    const tile = e.target;
+    const clickedValue = parseInt(tile.dataset.value);
+    const clickedIndex = board.indexOf(clickedValue);
+
+    if (isMoveValid(clickedIndex)) {
+        const emptyIndex = board.indexOf(0);
+
+        // 1. Atualiza o array lógico
+        swapTiles(clickedIndex, emptyIndex);
+
+        // 2. Atualiza os movimentos
+        moves++;
+        updateMoves();
+
+        // 3. Atualiza a interface gráfica
+        renderBoard();
+
+        // 4. Verifica se ganhou
+        if (checkWin()) {
+            isSolved = true;
+            messageDisplay.textContent = `PARABÉNS! Você resolveu em ${moves} movimentos!`;
+        }
+    } else {
+        messageDisplay.textContent = 'Movimento inválido. Tente novamente.';
+    }
+}
+
+// Renderiza o tabuleiro na tela a partir do array 'board'
+function renderBoard() {
+    puzzleBoard.innerHTML = ''; // Limpa o tabuleiro
+
+    board.forEach(value => {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.dataset.value = value;
+
+        if (value === 0) {
+            tile.classList.add('empty-tile');
+            tile.textContent = '';
+        } else {
+            tile.textContent = value;
+            tile.addEventListener('click', handleTileClick);
+        }
+
+        puzzleBoard.appendChild(tile);
+    });
+}
+
+// Verifica se o estado atual do array é igual ao estado de vitória
+function checkWin() {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        if (board[i] !== WINNING_STATE[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// --- Lógica de Inicialização e Embaralhamento ---
+
+// Verifica se o quebra-cabeça é solucionável (necessário para o 3x3)
+function isSolvable(arr) {
+    // Conta as inversões (pares fora de ordem)
+    let inversions = 0;
+    const tempArr = arr.filter(num => num !== 0); // Remove o 0
+
+    for (let i = 0; i < tempArr.length; i++) {
+        for (let j = i + 1; j < tempArr.length; j++) {
+            if (tempArr[i] > tempArr[j]) {
+                inversions++;
+            }
+        }
+    }
+
+    // Para um grid 3x3, deve ter um número PAR de inversões
+    return inversions % 2 === 0;
+}
+
+// Embaralha o tabuleiro até que seja solucionável
+function shuffleBoard() {
+    let shuffledBoard;
+    do {
+        // Cria um array ordenado (1 a 8, e 0)
+        shuffledBoard = [...WINNING_STATE];
+        
+        // Algoritmo de Fisher-Yates para embaralhar
+        for (let i = shuffledBoard.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledBoard[i], shuffledBoard[j]] = [shuffledBoard[j], shuffledBoard[i]];
+        }
+    } while (checkWin(shuffledBoard) || !isSolvable(shuffledBoard)); // Garante que não comece resolvido e seja solucionável
+
+    board = shuffledBoard;
+}
+
+function init() {
+    moves = 0;
+    isSolved = false;
+    updateMoves();
+    messageDisplay.textContent = '';
+    shuffleBoard();
+    renderBoard();
+}
+
+// --- Event Listeners ---
+resetButton.addEventListener('click', init);
+
+// Inicia o jogo ao carregar a página
+init();</script>
+</body>
+</html>

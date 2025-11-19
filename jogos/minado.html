@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campo Minado JS</title>
+    <style>body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+#status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+#reset-button {
+    padding: 8px 15px;
+    background-color: #2196F3; /* Azul */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#reset-button:hover {
+    background-color: #1976D2;
+}
+
+/* --- Grade do Jogo --- */
+#game-board {
+    display: grid;
+    /* As colunas serão definidas pelo JS para a grade 10x10 */
+    grid-template-columns: repeat(10, 30px);
+    grid-template-rows: repeat(10, 30px);
+    border: 5px solid #ccc;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    margin: 0 auto;
+}
+
+/* --- Estilo da Célula --- */
+.cell {
+    width: 30px;
+    height: 30px;
+    background-color: #bdbdbd; /* Cinza Coberto */
+    border: 1px solid #757575;
+    box-shadow: inset 1px 1px 2px #fff, inset -1px -1px 2px #555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9em;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Célula Revelada */
+.revealed {
+    background-color: #e0e0e0; /* Cinza Claro Revelado */
+    box-shadow: none;
+    border: 1px solid #9e9e9e;
+    cursor: default;
+}
+
+/* Célula Sinalizada */
+.flagged {
+    background-color: #ffcc80; /* Laranja Suave para Bandeira */
+    color: #c0392b;
+}
+
+/* Estilos para a Mina */
+.mine {
+    background-color: #f44336; /* Vermelho */
+    color: black;
+}
+
+/* Cores dos números para melhor legibilidade */
+.num-1 { color: #0000ff; }
+.num-2 { color: #008000; }
+.num-3 { color: #ff0000; }
+.num-4 { color: #800080; }
+.num-5 { color: #800000; }
+.num-6 { color: #008080; }
+
+#message {
+    margin-top: 15px;
+    font-size: 1.1em;
+    color: #333;
+    min-height: 20px;
+}</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Campo Minado</h1>
+        
+        <div id="status-bar">
+            <span id="mine-count">Minas: 10</span>
+            <button id="reset-button">Novo Jogo</button>
+        </div>
+
+        <div id="game-board"></div>
+        
+        <div id="message">Clique em uma célula para começar!</div>
+    </div>
+    
+    <script>// Elementos do DOM
+const gameBoard = document.getElementById('game-board');
+const mineCountDisplay = document.getElementById('mine-count');
+const resetButton = document.getElementById('reset-button');
+const messageDisplay = document.getElementById('message');
+
+// --- Configurações do Jogo ---
+const ROWS = 10;
+const COLS = 10;
+const TOTAL_MINES = 10;
+
+// --- Variáveis de Estado ---
+let board = []; // O estado lógico do tabuleiro (contém 'M' ou números)
+let grid = [];  // Array de objetos para controlar o estado da célula (revelada, sinalizada)
+let minesLeft = TOTAL_MINES;
+let isGameOver = false;
+let cellsRevealed = 0; // Contador para a condição de vitória
+
+// --- Funções Auxiliares de Coordenadas ---
+
+// Retorna as coordenadas válidas dos vizinhos de uma célula
+function getNeighbors(r, c) {
+    const neighbors = [];
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+            if (i === 0 && j === 0) continue; // Ignora a própria célula
+            
+            const newR = r + i;
+            const newC = c + j;
+
+            if (newR >= 0 && newR < ROWS && newC >= 0 && newC < COLS) {
+                neighbors.push({ r: newR, c: newC });
+            }
+        }
+    }
+    return neighbors;
+}
+
+// --- Inicialização do Tabuleiro ---
+
+function initializeBoard() {
+    // 1. Cria a grade lógica e de estado
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    grid = Array.from({ length: ROWS }, () => 
+        Array.from({ length: COLS }, () => ({
+            isMine: false,
+            isRevealed: false,
+            isFlagged: false,
+            value: 0
+        }))
+    );
+    
+    // 2. Coloca as minas
+    let minesPlaced = 0;
+    while (minesPlaced < TOTAL_MINES) {
+        const r = Math.floor(Math.random() * ROWS);
+        const c = Math.floor(Math.random() * COLS);
+
+        if (board[r][c] !== 'M') {
+            board[r][c] = 'M';
+            grid[r][c].isMine = true;
+            minesPlaced++;
+        }
+    }
+
+    // 3. Calcula os números (contagem de minas vizinhas)
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (board[r][c] !== 'M') {
+                let mineCount = 0;
+                getNeighbors(r, c).forEach(neighbor => {
+                    if (board[neighbor.r][neighbor.c] === 'M') {
+                        mineCount++;
+                    }
+                });
+                board[r][c] = mineCount;
+                grid[r][c].value = mineCount;
+            } else {
+                grid[r][c].value = 'M';
+            }
+        }
+    }
+}
+
+// --- Renderização e Interação ---
+
+function createCellElement(r, c) {
+    const cellEl = document.createElement('div');
+    cellEl.classList.add('cell');
+    cellEl.dataset.row = r;
+    cellEl.dataset.col = c;
+
+    // Clique esquerdo para revelar
+    cellEl.addEventListener('click', () => handleCellClick(r, c));
+
+    // Clique direito para sinalizar (bloqueia o menu de contexto)
+    cellEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        handleCellFlag(r, c, cellEl);
+    });
+
+    return cellEl;
+}
+
+function renderBoard() {
+    gameBoard.innerHTML = ''; // Limpa a grade
+    gameBoard.style.gridTemplateColumns = `repeat(${COLS}, 30px)`;
+
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const cellEl = createCellElement(r, c);
+            
+            // Aplica estilos e conteúdo baseados no estado da célula
+            const cellState = grid[r][c];
+
+            if (cellState.isRevealed) {
+                cellEl.classList.add('revealed');
+                if (cellState.isMine) {
+                    cellEl.classList.add('mine');
+                    cellEl.innerHTML = '💣';
+                } else if (cellState.value > 0) {
+                    cellEl.textContent = cellState.value;
+                    cellEl.classList.add(`num-${cellState.value}`);
+                }
+            } else if (cellState.isFlagged) {
+                cellEl.classList.add('flagged');
+                cellEl.innerHTML = '🚩';
+            }
+            
+            gameBoard.appendChild(cellEl);
+        }
+    }
+    mineCountDisplay.textContent = `Minas: ${minesLeft}`;
+}
+
+// --- Lógica de Jogo ---
+
+// Função recursiva para revelar células adjacentes vazias (o principal desafio)
+function revealCell(r, c) {
+    const cellState = grid[r][c];
+
+    // Condições de parada para a recursão:
+    if (cellState.isRevealed || cellState.isFlagged || isGameOver || cellState.isMine) {
+        return;
+    }
+    
+    cellState.isRevealed = true;
+    cellsRevealed++;
+    
+    // Se a célula não tem minas vizinhas (valor 0), revele os vizinhos
+    if (cellState.value === 0) {
+        getNeighbors(r, c).forEach(neighbor => {
+            revealCell(neighbor.r, neighbor.c);
+        });
+    }
+
+    // Verifica a vitória após a revelação
+    checkWinCondition();
+}
+
+function handleCellClick(r, c) {
+    if (isGameOver || grid[r][c].isRevealed || grid[r][c].isFlagged) return;
+
+    if (grid[r][c].isMine) {
+        // PERDEU O JOGO
+        isGameOver = true;
+        messageDisplay.textContent = 'Game Over! Você acertou uma mina. Clique em Novo Jogo.';
+        revealAllMines();
+    } else {
+        // Revela a célula (e pode iniciar a recursão)
+        revealCell(r, c);
+    }
+    renderBoard();
+}
+
+function handleCellFlag(r, c, cellEl) {
+    if (isGameOver || grid[r][c].isRevealed) return;
+
+    const cellState = grid[r][c];
+    
+    cellState.isFlagged = !cellState.isFlagged;
+    
+    if (cellState.isFlagged) {
+        minesLeft--;
+    } else {
+        minesLeft++;
+    }
+
+    renderBoard();
+    checkWinCondition(); // Checa se todas as minas foram sinalizadas corretamente
+}
+
+function checkWinCondition() {
+    const totalSafeCells = (ROWS * COLS) - TOTAL_MINES;
+    
+    if (cellsRevealed === totalSafeCells) {
+        isGameOver = true;
+        messageDisplay.textContent = 'Parabéns! Você limpou o campo!';
+        revealAllMines(true); // Revela bandeiras nas minas
+        return;
+    }
+}
+
+function revealAllMines(isWin = false) {
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const cellState = grid[r][c];
+            if (cellState.isMine) {
+                cellState.isRevealed = true;
+                // Em caso de vitória, apenas garanta que as minas sinalizadas tenham bandeiras
+                if (isWin) cellState.isFlagged = true;
+            }
+        }
+    }
+    renderBoard();
+}
+
+// --- Funções de Controle ---
+
+function init() {
+    isGameOver = false;
+    minesLeft = TOTAL_MINES;
+    cellsRevealed = 0;
+    messageDisplay.textContent = 'Clique em uma célula para começar!';
+    
+    initializeBoard();
+    renderBoard();
+}
+
+// --- Inicialização e Eventos ---
+resetButton.addEventListener('click', init);
+
+// Inicia o jogo ao carregar
+init();</script>
+</body>
+</html>

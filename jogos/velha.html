@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha JS</title>
+    <style>body {
+    font-family: Arial, sans-serif;
+    background-color: #2c3e50; /* Azul escuro */
+    color: #ecf0f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 10px;
+    color: #f1c40f; /* Amarelo */
+}
+
+#status-message {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    background-color: #34495e; /* Cinza azulado mais claro */
+    border: 5px solid #34495e;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.cell {
+    background-color: #ecf0f1; /* Branco/Claro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    color: #2c3e50; /* Cor padrão para os símbolos */
+}
+
+.cell:hover {
+    background-color: #bdc3c7;
+}
+
+/* Estilo para 'X' e 'O' */
+.cell.x {
+    color: #e74c3c; /* Vermelho */
+}
+
+.cell.o {
+    color: #3498db; /* Azul */
+}
+
+#restart-button {
+    padding: 10px 20px;
+    font-size: 1.1em;
+    background-color: #27ae60; /* Verde */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#restart-button:hover {
+    background-color: #2ecc71;
+}</style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Jogo da Velha</h1>
+        
+        <div id="status-message">Vez do Jogador X</div>
+
+        <div class="board" id="game-board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        
+        <button id="restart-button">Reiniciar Jogo</button>
+    </div>
+
+    <script>// ===============================================
+// VARIÁVEIS DO JOGO
+// ===============================================
+const cells = document.querySelectorAll('.cell');
+const statusMessage = document.getElementById('status-message');
+const restartButton = document.getElementById('restart-button');
+
+// A matriz 1D representa o tabuleiro: 0 a 8
+let board = ['', '', '', '', '', '', '', '', '']; 
+let currentPlayer = 'X'; // Sempre começa com o Jogador (X)
+let gameActive = true;
+const AI_PLAYER = 'O';
+const HUMAN_PLAYER = 'X';
+
+// Combinações vencedoras (índices no array 'board')
+const winConditions = [
+    [0, 1, 2], // Linhas
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6], // Colunas
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8], // Diagonais
+    [2, 4, 6]
+];
+
+// ===============================================
+// FUNÇÕES PRINCIPAIS DO JOGO
+// ===============================================
+
+/**
+ * Função executada ao clicar em uma célula.
+ */
+function handleCellClick(e) {
+    const clickedCell = e.target;
+    const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+    // Verifica se a célula está vazia, se o jogo está ativo e se é a vez do humano
+    if (board[clickedCellIndex] !== '' || !gameActive || currentPlayer === AI_PLAYER) {
+        return;
+    }
+
+    // 1. Jogada Humana
+    makeMove(clickedCellIndex, HUMAN_PLAYER);
+
+    // 2. Verifica o resultado
+    if (gameActive) {
+        checkResult();
+    }
+
+    // 3. Se o jogo ainda estiver ativo, é a vez da IA
+    if (gameActive) {
+        changePlayer(); // Muda para 'O' (IA)
+        setTimeout(handleAIMove, 500); // Adiciona um pequeno atraso para simular o "pensamento"
+    }
+}
+
+/**
+ * Executa uma jogada no tabuleiro e no DOM.
+ */
+function makeMove(index, player) {
+    const cellElement = cells[index];
+    board[index] = player;
+    cellElement.textContent = player;
+    cellElement.classList.add(player.toLowerCase());
+}
+
+/**
+ * Troca o jogador ativo e atualiza a mensagem.
+ */
+function changePlayer() {
+    currentPlayer = currentPlayer === HUMAN_PLAYER ? AI_PLAYER : HUMAN_PLAYER;
+    if (gameActive) {
+        statusMessage.textContent = `Vez do Jogador ${currentPlayer}`;
+    }
+}
+
+/**
+ * Verifica se houve vitória ou empate.
+ */
+function checkResult() {
+    let roundWon = false;
+
+    for (let i = 0; i < winConditions.length; i++) {
+        const winCombo = winConditions[i];
+        
+        let a = board[winCombo[0]];
+        let b = board[winCombo[1]];
+        let c = board[winCombo[2]];
+
+        if (a !== '' && a === b && b === c) {
+            roundWon = true;
+            break;
+        }
+    }
+
+    if (roundWon) {
+        statusMessage.textContent = `Jogador ${currentPlayer} VENCEU! 🎉`;
+        gameActive = false;
+        return;
+    }
+
+    let roundDraw = !board.includes('');
+    if (roundDraw) {
+        statusMessage.textContent = 'O jogo empatou. 🤝';
+        gameActive = false;
+        return;
+    }
+}
+
+/**
+ * Reinicia todas as variáveis e o tabuleiro.
+ */
+function restartGame() {
+    board = ['', '', '', '', '', '', '', '', ''];
+    currentPlayer = HUMAN_PLAYER; // O Humano sempre começa
+    gameActive = true;
+    statusMessage.textContent = 'Vez do Jogador X';
+    
+    cells.forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('x');
+        cell.classList.remove('o');
+    });
+}
+
+// ===============================================
+// LÓGICA DA IA (O)
+// ===============================================
+
+/**
+ * Lógica da IA para decidir onde jogar.
+ */
+function handleAIMove() {
+    if (!gameActive) return;
+
+    let move = getBestMove();
+    
+    makeMove(move, AI_PLAYER);
+
+    // Verifica o resultado após a jogada da IA
+    checkResult();
+    
+    // Se o jogo ainda estiver ativo, troca para o Jogador Humano
+    if (gameActive) {
+        changePlayer();
+    }
+}
+
+/**
+ * Implementa a estratégia de prioridades da IA.
+ */
+function getBestMove() {
+    const emptyCells = getEmptyCells();
+
+    // 1. Tentar Vencer (IA = 'O')
+    let winningMove = checkWinOrBlock(AI_PLAYER);
+    if (winningMove !== -1) {
+        return winningMove;
+    }
+
+    // 2. Tentar Bloquear (Humano = 'X')
+    let blockingMove = checkWinOrBlock(HUMAN_PLAYER);
+    if (blockingMove !== -1) {
+        return blockingMove;
+    }
+
+    // 3. Priorizar Centro (index 4)
+    if (emptyCells.includes(4)) {
+        return 4;
+    }
+
+    // 4. Priorizar Cantos (index 0, 2, 6, 8)
+    const corners = [0, 2, 6, 8];
+    const availableCorners = emptyCells.filter(index => corners.includes(index));
+    if (availableCorners.length > 0) {
+        // Escolhe um canto aleatório disponível
+        return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+    }
+
+    // 5. Movimento Aleatório (Qualquer célula vazia restante)
+    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+}
+
+/**
+ * Retorna uma lista de índices das células vazias.
+ */
+function getEmptyCells() {
+    return board.map((val, index) => val === '' ? index : null).filter(val => val !== null);
+}
+
+/**
+ * Verifica se um jogador pode vencer ou ser bloqueado no próximo movimento.
+ * Retorna o índice da jogada vencedora/bloqueadora, ou -1 se não houver.
+ */
+function checkWinOrBlock(player) {
+    for (let i = 0; i < winConditions.length; i++) {
+        const [a, b, c] = winConditions[i];
+        const combo = [board[a], board[b], board[c]];
+        
+        // Verifica se o combo tem duas peças do 'player' e uma vazia
+        let playerCount = combo.filter(val => val === player).length;
+        let emptyCount = combo.filter(val => val === '').length;
+        
+        if (playerCount === 2 && emptyCount === 1) {
+            // Encontra o índice vazio que completaria a vitória/bloqueio
+            let emptyIndexInCombo = combo.findIndex(val => val === '');
+            return winConditions[i][emptyIndexInCombo];
+        }
+    }
+    return -1;
+}
+
+// ===============================================
+// LISTENERS DE EVENTOS
+// ===============================================
+
+// Adiciona listener para o clique em cada célula
+cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+
+// Adiciona listener para o botão de reinício
+restartButton.addEventListener('click', restartGame);
+</script>
+</body>
+</html>

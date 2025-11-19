@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Forca</title>
+    <style>body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 500px;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#forca-desenho {
+    min-height: 150px; /* Espaço para o desenho da forca */
+    margin-bottom: 20px;
+    border: 1px solid #ccc; /* Apenas para visualização do espaço */
+    line-height: 150px;
+}
+
+.palavra {
+    font-size: 2em;
+    letter-spacing: 10px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.letras-erradas {
+    margin-bottom: 20px;
+    font-size: 1.1em;
+}
+
+#letras-erradas-exibicao {
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 10px;
+    letter-spacing: 2px;
+}
+
+.entrada-letra input[type="text"] {
+    padding: 10px;
+    width: 60px;
+    text-align: center;
+    font-size: 1.2em;
+    margin-right: 10px;
+    text-transform: uppercase;
+}
+
+.entrada-letra button, .container button {
+    padding: 10px 15px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+.container button {
+    margin-top: 20px;
+    background-color: #ffc107;
+    color: #333;
+}
+
+.mensagem {
+    margin-top: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    min-height: 30px;
+}
+
+/* Exemplo de estilo para mensagem de erro/vitória */
+.vitoria {
+    color: #28a745;
+}
+
+.derrota {
+    color: #dc3545;
+}</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jogo da Forca</h1>
+        
+        <div id="forca-desenho">
+            <p>  </p>
+        </div>
+
+        <div id="palavra-secreta" class="palavra">_ _ _ _ _</div>
+
+        <div class="letras-erradas">
+            <p>Letras Erradas:</p>
+            <span id="letras-erradas-exibicao"></span>
+        </div>
+
+        <div class="entrada-letra">
+            <input type="text" id="entrada-letra-input" maxlength="1" placeholder="Digite uma letra" required>
+            <button onclick="tentarLetra()">Tentar</button>
+        </div>
+
+        <div id="mensagem" class="mensagem"></div>
+
+        <button onclick="iniciarJogo()">Novo Jogo</button>
+    </div>
+
+    <script>// Variáveis Globais
+let palavraSecreta = "";
+let letrasAdivinhadas = [];
+let letrasErradas = [];
+const MAX_ERROS = 4;
+const palavras = [
+    { palavra: "TOMATE", dica: "Fruta" },
+    { palavra: "GARFO", dica: "Item da Cosinha" },
+    { palavra: "ARGENTINA", dica: "Pais" },
+    { palavra: "GALINHA", dica: "Animal" },
+    { palavra: "CACHORRO", dica: "Animal" },
+    { palavra: "TAMANDUA BANDEIRA", dica: "Animal" },
+    { palavra: "UVA", dica: "Fruta" },
+    { palavra: "VIOLONCELO", dica: "Instrumento Musical" },
+    { palavra: "PENA", dica: "Item de Escrita" },
+    { palavra: "CAMPO MINADO", dica: "Jogo do catalogo" }
+];
+
+// Elementos do DOM
+const palavraDisplay = document.getElementById('palavra-secreta');
+const letrasErradasDisplay = document.getElementById('letras-erradas-exibicao');
+const entradaInput = document.getElementById('entrada-letra-input');
+const mensagemDisplay = document.getElementById('mensagem');
+const forcaDesenho = document.getElementById('forca-desenho');
+
+// 1. Função para iniciar ou reiniciar o jogo
+function iniciarJogo() {
+    // Resetar variáveis
+    letrasAdivinhadas = [];
+    letrasErradas = [];
+    mensagemDisplay.textContent = "";
+    entradaInput.value = "";
+    entradaInput.disabled = false;
+
+    // Escolher nova palavra aleatoriamente
+    const indexAleatorio = Math.floor(Math.random() * palavras.length);
+    palavraSecreta = palavras[indexAleatorio].palavra;
+    
+    // Você pode mostrar a dica aqui, se quiser
+    // console.log("Dica: " + palavras[indexAleatorio].dica); 
+
+    // Atualizar a interface
+    atualizarPalavraDisplay();
+    atualizarForcaDisplay();
+    atualizarLetrasErradasDisplay();
+}
+
+// 2. Função para exibir a palavra com traços
+function atualizarPalavraDisplay() {
+    const palavraExibida = palavraSecreta
+        .split('')
+        .map(letra => (letrasAdivinhadas.includes(letra) ? letra : '_'))
+        .join(' ');
+    palavraDisplay.textContent = palavraExibida;
+}
+
+// 3. Função para exibir as letras erradas
+function atualizarLetrasErradasDisplay() {
+    letrasErradasDisplay.textContent = letrasErradas.join(', ');
+}
+
+// 4. Função para desenhar a forca (simulação)
+function atualizarForcaDisplay() {
+    // **NOTA:** Em um jogo real, você usaria SVG, Canvas ou imagens (CSS) 
+    // para desenhar as partes do boneco com base no length das letrasErradas.
+    // Aqui, faremos uma simulação simples com texto.
+    const erros = letrasErradas.length;
+    forcaDesenho.textContent = `Erros: ${erros} de ${MAX_ERROS}`;
+    
+    // Esta é a parte que você precisaria expandir para o desenho visual!
+    // Exemplo: if (erros >= 1) { desenharCabeça(); }
+}
+
+// 5. Função principal para processar a tentativa do usuário
+function tentarLetra() {
+    let tentativa = entradaInput.value.toUpperCase();
+    entradaInput.value = ""; // Limpa o input após a tentativa
+
+    // Validação básica
+    if (!tentativa || tentativa.length !== 1 || !/^[A-Z]$/.test(tentativa)) {
+        mensagemDisplay.textContent = "Por favor, insira uma única letra válida (A-Z).";
+        return;
+    }
+    
+    if (letrasAdivinhadas.includes(tentativa) || letrasErradas.includes(tentativa)) {
+        mensagemDisplay.textContent = `A letra "${tentativa}" já foi tentada.`;
+        return;
+    }
+
+    if (palavraSecreta.includes(tentativa)) {
+        // Letra correta
+        letrasAdivinhadas.push(tentativa);
+        mensagemDisplay.textContent = `Boa! A letra "${tentativa}" está na palavra.`;
+    } else {
+        // Letra errada
+        letrasErradas.push(tentativa);
+        mensagemDisplay.textContent = `Ops! A letra "${tentativa}" não está na palavra.`;
+        atualizarForcaDisplay();
+        atualizarLetrasErradasDisplay();
+    }
+    
+    // Atualiza a palavra e verifica se o jogo terminou
+    atualizarPalavraDisplay();
+    verificarFimDeJogo();
+}
+
+// 6. Função para checar as condições de vitória/derrota
+function verificarFimDeJogo() {
+    const palavraAdivinhada = palavraDisplay.textContent.split(' ').join('');
+
+    // Condição de Vitória
+    if (palavraAdivinhada === palavraSecreta) {
+        mensagemDisplay.textContent = "🏆 Parabéns! Você ganhou!";
+        mensagemDisplay.classList.add('vitoria');
+        entradaInput.disabled = true; // Desabilita a entrada
+        return;
+    }
+
+    // Condição de Derrota
+    if (letrasErradas.length >= MAX_ERROS) {
+        mensagemDisplay.textContent = `💀 Você perdeu! A palavra era: ${palavraSecreta}`;
+        mensagemDisplay.classList.add('derrota');
+        entradaInput.disabled = true; // Desabilita a entrada
+        
+        // Você pode adicionar a exibição do boneco completo aqui
+        // forcaDesenho.textContent = "BONECO COMPLETO"; 
+        return;
+    }
+}
+
+// Iniciar o jogo quando a página carregar
+window.onload = iniciarJogo;</script>
+</body>
+</html>
