@@ -1,0 +1,202 @@
+:root {
+    --primary-color: #157202;
+    --secondary-color: #fff;
+    --text-color: #333;
+    --light-text-color: #f4f7fa;
+    --dark-bg-color: #1a1a1a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: #f4f7fa;
+}
+
+/* --- Cabeçalho (Header) --- */
+.header {
+    background-color: #fafdfa;
+    padding: 20px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #55d13c;
+  text-decoration: none;
+  transition: transform 0.3s ease; /* Transição para o movimento */
+}
+
+.logo:hover {
+  transform: scale(1.1); /* Aumenta o tamanho em 10% */
+  cursor: pointer; /* Muda o cursor para indicar que é clicável */
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: var(--primary-color);
+}
+
+/* --- Seção Principal (Hero) --- */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color),#6eeb55 );
+    color: var(--light-text-color);
+    text-align: center;
+    padding: 150px 20px;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    max-width: 700px;
+    margin: 0 auto 40px;
+}
+
+.cta-button {
+    background-color: #fff;
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 700;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.cta-button:hover {
+    transform: translateY(-5px);
+    background-color: #f0f0f0;
+}
+
+/* --- Seção de Recursos (Features) --- */
+.features-section {
+    padding: 80px 50px;
+    text-align: center;
+}
+
+.features-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 60px;
+    color: var(--primary-color);
+}
+
+.features-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.feature-card {
+    background-color: var(--secondary-color);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    flex: 1 1 300px;
+    max-width: 350px;
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+
+.feature-card img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+}
+
+.feature-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+/* --- Seção Final de Contato (CTA) --- */
+.cta-section {
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.cta-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.cta-section p {
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+}
+
+/* --- Rodapé (Footer) --- */
+footer {
+    background-color: var(--dark-bg-color);
+    color: var(--light-text-color);
+    text-align: center;
+    padding: 20px;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    nav {
+        margin-top: 15px;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .features-section, .cta-section {
+        padding: 60px 20px;
+    }
+
+    .features-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+}

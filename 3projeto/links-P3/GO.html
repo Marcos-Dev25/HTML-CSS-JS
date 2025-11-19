@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SollarTrack - Dashboard</title>
+    <style>
+    body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #c1d3e1;
+    background-image: url('https://energiaverde.com.br/wp-content/uploads/2020/11/pexels-pixabay-356036-1536x1010.jpg');
+    background-size: cover; /* This makes the image cover the entire body */
+    background-position: center; /* This centers the image */
+    background-repeat: no-repeat; /* This prevents the image from repeating */
+    background-attachment: fixed; /* This makes the background image stay put when you scroll */
+    min-height: 100vh;
+    overflow: hidden;
+}
+.main-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.7); /* Adds a semi-transparent white overlay to improve readability */
+}
+.header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    padding: 10px 20px;
+    box-sizing: border-box;
+}
+.logo {
+    font-size: 2em;
+    font-weight: 800px;
+    color: #000;
+    padding-left: 30px;
+    padding: 0 20px;
+    
+}
+.content {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    gap: 40px;
+    z-index: 2; /* Ensures content is above the background */
+}
+.table-container {
+    width: 80%;
+    max-width: 700px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #333;
+}
+caption {
+    font-size: 1.8em;
+    font-weight: 600;
+    padding: 20px 0;
+    color: #555;
+    text-align: center;
+}
+th, td {
+    text-align: left;
+    padding: 15px 20px;
+}
+th {
+    background-color: #e9ecef;
+    color: #495057;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+tr:hover {
+    background-color: #e2e6ea;
+    transition: background-color 1s ease;
+}
+td {
+    border-bottom: 1px solid #dee2e6;
+}
+.chart-container {
+    width: 100%;
+    max-width: 570px;
+    background-color: #fff;
+    padding: 10px 10px;
+    border-radius: 40px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.fundo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+
+ <header class="header">
+        <div class="logo">
+            SOLLARTRACK
+        </div>
+    </header>
+    <div class="fundo">
+    </div>
+    <div class="content">
+        <div class="chart-container">
+            <h2>Resultado de Energia Renovavel no Goiás(2024)</h2>
+            <canvas id="meuGraficoDeEnergia"></canvas>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <caption>Consumo de Energia no [Goiás] 2024</caption>
+                <thead>
+                    <tr>
+                        <th>Setor</th>
+                        <th>Produção(Anual)</th>
+                        <th>Porcentagem de uso Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Eolico</td>
+                        <td>8,7%</td>
+                        <td>4,3%</td>
+                    </tr>
+                    <tr>
+                        <td>Eletrico</td>
+                        <td>38,8%</td>
+                        <td>22,1%</td>
+                    </tr>
+                    <tr>
+                        <td>Solar</td>
+                        <td>46,8%</td>
+                        <td>32,1%</td>
+                    </tr>
+                    <tr>
+                        <td>Termico</td>
+                        <td>3,8%</td>
+                        <td>1,5%</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>Hidreletrico</td>
+                        <td>64,8%</td>
+                        <td>42,3%</td>
+                    </tr>                   
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Dados de exemplo, substitua pelos seus valores reais
+    const dadosConsumo = {
+        labels: ['Solar', 'Eolico', 'Hidreletrico', 'Biomasa'],
+        valores: [27.8, 18.6, 41.8 , 4.3] // Esses valores representam as porcentagens
+    };
+
+    // Configuração do gráfico
+    const config = {
+        type: 'pie', // Tipo de gráfico: 'pie' (pizza)
+        data: {
+            labels: dadosConsumo.labels,
+            datasets: [{
+                data: dadosConsumo.valores,
+                backgroundColor: [
+                    'red', // Cor para o 1º setor
+                    'blue', // Cor para o 2º setor
+                    'green', // Cor para o 3º setor
+                    'yellow'  // Cor para o 4º setor
+                ],
+                hoverBackgroundColor: [
+                    'red',
+                    'blue',
+                    'green',
+                    'yellow'
+                ],
+                borderWidth: 1 // Largura da borda entre as fatias
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top', // Posição da legenda
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed + '%';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    // Cria o gráfico
+    window.onload = function() {
+        const ctx = document.getElementById('meuGraficoDeEnergia').getContext('2d');
+        new Chart(ctx, config);
+    };
+</script>
+</body>
+</html>
