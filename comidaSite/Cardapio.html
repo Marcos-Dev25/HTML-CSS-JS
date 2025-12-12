@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>/* Cardápio */
+.menu {
+  margin-top: 40px;
+  padding: 20px;
+  background: #ffe3f1;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(255, 111, 179, 0.15);
+}
+
+.menu h2 {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--pink-2);
+  margin-bottom: 20px;
+}
+
+.menu-category {
+  margin-bottom: 28px;
+}
+
+.menu-category h3 {
+  color: var(--pink-1);
+  margin-bottom: 12px;
+}
+
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item {
+  background: white;
+  padding: 14px 18px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.item h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--pink-2);
+}
+
+.item p {
+  margin: 4px 0 10px;
+  color: #6a4f63;
+}
+
+.price {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  font-weight: 700;
+  color: var(--pink-1);
+}
+
+/* Tema escuro */
+body.dark .menu {
+  background: #2b1827;
+}
+
+body.dark .item {
+  background: #3a2036;
+  color: #ffd8ef;
+}
+
+body.dark .price {
+  color: var(--accent);
+}
+</style>
+</head>
+<body>
+    <section id="cardapio" class="menu">
+  <h2>Cardápio</h2>
+
+  <div class="menu-category">
+    <h3>🍔 Hambúrgueres</h3>
+    <div class="menu-items">
+      <div class="item">
+        <h4>Pink Burger</h4>
+        <p>Pão rosa artesanal, carne 120g, queijo prato, molho especial rosa.</p>
+        <span class="price">R$ 24,90</span>
+      </div>
+
+      <div class="item">
+        <h4>Cheddar Queen</h4>
+        <p>Pão brioche rosa, carne 150g, cheddar cremoso e cebola caramelizada.</p>
+        <span class="price">R$ 29,90</span>
+      </div>
+
+      <div class="item">
+        <h4>Veggie Pink</h4>
+        <p>Burger vegetal, alface americana, tomate e maionese rosa vegana.</p>
+        <span class="price">R$ 26,90</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu-category">
+    <h3>🍟 Acompanhamentos</h3>
+    <div class="menu-items">
+      <div class="item">
+        <h4>Batata Pink</h4>
+        <p>Batatas crocantes com sal rosa e molho especial.</p>
+        <span class="price">R$ 14,90</span>
+      </div>
+
+      <div class="item">
+        <h4>Nuggets Artesanais</h4>
+        <p>Empanamento leve com toque de páprica.</p>
+        <span class="price">R$ 18,90</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu-category">
+    <h3>🥤 Bebidas</h3>
+    <div class="menu-items">
+      <div class="item">
+        <h4>Pink Lemonade</h4>
+        <p>Clássica limonada rosa refrescante.</p>
+        <span class="price">R$ 12,00</span>
+      </div>
+
+      <div class="item">
+        <h4>Milkshake Rosa</h4>
+        <p>Milkshake cremoso de frutas vermelhas com chantilly.</p>
+        <span class="price">R$ 18,00</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+<script>(function(){
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    document.body.animate([{opacity:0.9},{opacity:1}], {duration:250});
+  });
+})();
+</script>
+</html>
